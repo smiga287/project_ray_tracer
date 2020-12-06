@@ -10,8 +10,10 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <iostream>
+#include "utility.h"
 
 using std::sqrt;
+using std::fabs;
 
 class Vec3 {
 private:
@@ -61,11 +63,6 @@ public:
         return *this *= 1 / t;
     }
 
-    // Not really needed because fmt is already working with Vec3
-    friend std::ostream& operator<<(std::ostream& out, const Vec3& v) {
-        return out << v.x() << ' ' << v.y() << ' ' << v.z();
-    }
-
     double length() const {
         return sqrt(length_squared());
     }
@@ -74,8 +71,28 @@ public:
         return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
     }
 
+    bool near_zero() const {
+        // Return true if the vector is close to zero in all dimensions
+        const double s = 1e-8;
+        return (fabs(this->x()) < s) && (fabs(this->y()) < s) && (fabs(this->z()) < s);
+    }
+
+    inline static Vec3 random() {
+        return Vec3(random_double(), random_double(), random_double());
+    }
+
+    inline static Vec3 random(double min, double max) {
+        return Vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+    }
+
 };
 
+// Vec3 utility functions
+
+// Not really needed because fmt is already working with Vec3
+inline std::ostream& operator<<(std::ostream& out, const Vec3& v) {
+    return out << v.x() << ' ' << v.y() << ' ' << v.z();
+}
 inline Vec3 operator+(const Vec3 &u, const Vec3 &v) {
     return Vec3(u.x() + v.x(), u.y() + v.y(), u.z() + v.z());
 }
@@ -96,14 +113,14 @@ inline Vec3 operator*(const Vec3 &v, double t) {
     return t * v;
 }
 
-inline Vec3 operator/(Vec3 v, double t) {
+inline Vec3 operator/(const Vec3& v, double t) {
     return (1 / t) * v;
 }
 
 inline double dot(const Vec3 &u, const Vec3 &v) {
     return u.x() * v.x()
-           + u.y() * v.y()
-           + u.z() * v.z();
+         + u.y() * v.y()
+         + u.z() * v.z();
 }
 
 inline Vec3 cross(const Vec3 &u, const Vec3 &v) {
@@ -112,13 +129,46 @@ inline Vec3 cross(const Vec3 &u, const Vec3 &v) {
                 u.x() * v.y() - u.y() * v.x());
 }
 
-inline Vec3 unit_vector(Vec3 v) {
+inline Vec3 unit_vector(const Vec3& v) {
     return v / v.length();
 }
 
+Vec3 random_int_unit_disk() {
+    while (true) {
+        Vec3 p(random_double(-1, 1), random_double(-1, 1), 0);
+        if (p.length_squared() >= 1) {
+            continue;
+        }
+        return p;
+    }
+}
+
+Vec3 random_in_unit_sphere() {
+    while (true) {
+        auto p = Vec3::random(-1, 1);
+        if (p.length_squared() >= 1) {
+            continue;
+        }
+        return p;
+    }
+}
+
+Vec3 random_unit_vector() {
+    return unit_vector(random_in_unit_sphere());
+}
+
+
+Vec3 reflect(const Vec3& v, const Vec3& n) {
+    return v - 2 * dot(v, n) * n;
+}
+
+Vec3 refract(const Vec3& uv, const Vec3& n, double etai_over_etat) {
+    auto cos_theta = fmin(dot(-uv, n), 1.0);
+    Vec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
+    Vec3 r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.length_squared())) * n;
+    return r_out_perp + r_out_parallel;
+}
+
 using Point3 = Vec3; // 3D point
-
-// Vec3 utility functions
-
 
 #endif //PROJECT_RAY_TRACING_VEC3_H

@@ -19,7 +19,7 @@ public:
     Vec3 getDirection() const { return direction; }
 
     Point3 at(double t) const {
-        return origin * t * direction;
+        return origin + t * direction;
     }
 };
 
