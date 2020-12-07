@@ -10,31 +10,27 @@
 #include <iostream>
 #include "fmt/format.h"
 #include <fmt/ostream.h>
+#include <fstream>
 
-class Color : public Vec3 {
-public:
-    using Vec3::Vec3; // Uses Vec3 constructors
-    Color(Vec3 v) : Vec3(v) {}; // allows for implicit conversion
+using Color = Vec3;
 
-    static void write(const Color& pixel_color, int samples_per_pixel);
-};
+Color average_color_gamma(const Color& pixel_color, int samples_per_pixel) {
+    // Divide the color by the number of samples and gamma-correct for gamma=2.0
+    Color avg_color = (pixel_color * (1.0 / samples_per_pixel));
+    avg_color.sqrt();
+    return avg_color;
+}
 
-void Color::write(const Color& pixel_color, int samples_per_pixel) {
+void write_color(const Color& pixel_color, std::ofstream& output) {
     double r = pixel_color.x();
     double g = pixel_color.y();
     double b = pixel_color.z();
-
-    // Divide the color by the number of samples and gamma-correct for gamma=2.0
-    auto scale = 1.0 / samples_per_pixel;
-    r = sqrt(scale * r);
-    g = sqrt(scale * g);
-    b = sqrt(scale * b);
 
     // Write the translated [0, 255] value of each color component
     int R = static_cast<int>(256 * clamp(r, 0, 0.999));
     int G = static_cast<int>(256 * clamp(g, 0, 0.999));
     int B = static_cast<int>(256 * clamp(b, 0, 0.999));
-    fmt::print("{} {} {}\n", R, G, B);
+    fmt::print(output,"{} {} {}\n", R, G, B);
 }
 
 #endif //PROJECT_RAY_TRACING_COLOR_H

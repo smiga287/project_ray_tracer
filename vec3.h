@@ -64,7 +64,7 @@ public:
     }
 
     double length() const {
-        return sqrt(length_squared());
+        return std::sqrt(length_squared());
     }
 
     double length_squared() const {
@@ -76,6 +76,13 @@ public:
         const double s = 1e-8;
         return (fabs(this->x()) < s) && (fabs(this->y()) < s) && (fabs(this->z()) < s);
     }
+
+    void sqrt() {
+        e[0] = std::sqrt(e[0]);
+        e[1] = std::sqrt(e[1]);
+        e[2] = std::sqrt(e[2]);
+    }
+
 
     inline static Vec3 random() {
         return Vec3(random_double(), random_double(), random_double());
