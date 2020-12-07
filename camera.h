@@ -15,6 +15,7 @@ private:
     Vec3 vertical;
     Vec3 w, u, v;
     double lens_radius;
+    double time0, time1; // shutter open/close times
 
 public:
     Camera(
@@ -24,7 +25,9 @@ public:
             double vert_fov, // vertical field of view in degrees
             double aspect_ratio,
             double aperture,
-            double focus_dist) {
+            double focus_dist,
+            double tm0 = 0,
+            double tm1 = 0) {
 
         double theta = degree_to_radians(vert_fov);
         double h = tan(theta / 2);
@@ -42,12 +45,14 @@ public:
         lower_left_corner = origin - horizontal / 2 - vertical / 2 - focus_dist * w;
 
         lens_radius = aperture / 2;
+        time0 = tm0;
+        time1 = tm1;
     }
 
     Ray get_ray(double s, double t) const {
         Vec3 rd = lens_radius * random_int_unit_disk(); // generate defocus blur
         Vec3 offset = u * rd.x() + v * rd.y();
-        return Ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset);
+        return Ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset, random_double(time0, time1));
     }
 };
 

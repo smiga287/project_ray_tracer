@@ -29,7 +29,7 @@ public:
             scatter_direction = rec.normal;
         }
 
-        scattered = Ray(rec.p, scatter_direction);
+        scattered = Ray(rec.p, scatter_direction, r_in.getTime());
         attenuation = albedo;
         return true;
     }
@@ -44,7 +44,7 @@ public:
 
     bool scatter(const Ray &r_in, const HitRecord &rec, Color &attenuation, Ray &scattered) const override {
         Vec3 reflected = reflect(unit_vector(r_in.getDirection()), rec.normal);
-        scattered = Ray(rec.p, reflected + fuzz * random_in_unit_sphere()); // fuzzy reflection
+        scattered = Ray(rec.p, reflected + fuzz * random_in_unit_sphere(), r_in.getTime()); // fuzzy reflection
         attenuation = albedo;
         // if they are in the same direction, then we had a reflection
         return dot(scattered.getDirection(), rec.normal) > 0;
@@ -82,7 +82,7 @@ public:
             direction = refract(unit_direction, rec.normal, refraction_ratio);
         }
 
-        scattered = Ray(rec.p, direction);
+        scattered = Ray(rec.p, direction, r_in.getTime());
         return true;
     }
 };

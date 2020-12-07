@@ -1,26 +1,35 @@
 //
-// Created by smiga287 on 02/12/2020.
+// Created by smiga287 on 07/12/2020.
 //
 
-#ifndef PROJECT_RAY_TRACING_SPHERE_H
-#define PROJECT_RAY_TRACING_SPHERE_H
+#ifndef PROJECT_RAY_TRACING_MOVING_SPHERE_H
+#define PROJECT_RAY_TRACING_MOVING_SPHERE_H
+
 
 #include "hittable.h"
 #include "vec3.h"
 
-class Sphere : public Hittable {
+class MovingSphere : public Hittable {
 private:
-    Point3 center;
+    Point3 center0, center1;
     double radius;
     shared_ptr<Material> mat_ptr;
+    double time0, time1;
 public:
-    Sphere() = default;
-    Sphere(Point3 cen, double r, shared_ptr<Material> m) : center(cen), radius(r), mat_ptr(std::move(m)) {};
+    MovingSphere() = default;
+    MovingSphere(Point3 cen0, Point3 cen1, double tm0, double tm1, double r, shared_ptr<Material> m)
+        : center0(cen0), center1(cen1), time0(tm0), time1(tm1), radius(r), mat_ptr(std::move(m)) {};
     bool hit(const Ray& r, double t_min, double t_max, HitRecord& hit_rec) const override;
+    Point3 getCurCenter(double time) const;
+
     bool bounding_box(double time0, double time1, AABB &output_box) const override;
 };
 
-bool Sphere::hit(const Ray &r, double t_min, double t_max, HitRecord &hit_rec) const {
+Point3 MovingSphere::getCurCenter(double time) const {
+    return  center0 + ((time - time0) / (time1 - time0)) * (center1 - center0);
+}
+
+bool MovingSphere::hit(const Ray &r, double t_min, double t_max, HitRecord &hit_rec) const {
     // Point O - origin
     // Point P - random point
     // Point C - Sphere center
@@ -38,7 +47,7 @@ bool Sphere::hit(const Ray &r, double t_min, double t_max, HitRecord &hit_rec) c
     //               t1,2 = (-b +- sqrt(b^2 - 4ac)) / 2a, b = 2 * half_b
     //               t1,2 = (-half_b +- sqrt(b^2 - ac)) / a
 
-    Vec3 co = r.getOrigin() - center;
+    Vec3 co = r.getOrigin() - getCurCenter(r.getTime());
     double a = r.getDirection().length_squared();
     double half_b = dot(co, r.getDirection());
     double c = co.length_squared() - radius * radius;
@@ -59,17 +68,20 @@ bool Sphere::hit(const Ray &r, double t_min, double t_max, HitRecord &hit_rec) c
 
     hit_rec.t = root; // parameter t of the ray at which sphere is hit
     hit_rec.p = r.at(hit_rec.t); // Ray R(t) => point of intersection between ray and sphere
-    Vec3 outward_normal = (hit_rec.p - center) / radius; // normed normal on the sphere surface
+    Vec3 outward_normal = (hit_rec.p - getCurCenter(r.getTime())) / radius; // normed normal on the sphere surface
     hit_rec.set_face_normal(r, outward_normal);
     hit_rec.mat_ptr = mat_ptr;
 
     return true;
 }
 
-bool Sphere::bounding_box(double time0, double time1, AABB &output_box) const {
+bool MovingSphere::bounding_box(double time0, double time1, AABB &output_box) const {
     auto R = Vec3(radius, radius, radius);
-    output_box = AABB(center - R, center + R);
+    auto box0 = AABB(getCurCenter(time0) - R, getCurCenter(time0) + R);
+    auto box1 = AABB(getCurCenter(time1) - R, getCurCenter(time1) + R);
+    output_box = surrounding_box(box0, box1);
     return true;
 }
 
-#endif //PROJECT_RAY_TRACING_SPHERE_H
+
+#endif //PROJECT_RAY_TRACING_MOVING_SPHERE_H

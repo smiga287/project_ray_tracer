@@ -7,6 +7,7 @@
 #include "hittable_list.h"
 #include "material.h"
 #include "sphere.h"
+#include "moving_sphere.h"
 #include "utility.h"
 
 Color ray_color(const Ray& r, const Hittable& world, int depth) {
@@ -48,16 +49,19 @@ HittableList random_scene() {
                     // diffuse
                     Color albedo = Color::random() * Color::random();
                     sphere_material = make_shared<Lambertian>(albedo);
+                    Point3 center1 = center + Vec3(0, random_double(0, 0.5), 0);
+                    world.add(make_shared<MovingSphere>(center, center1, 0.0, 1.0, 0.2, sphere_material));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = Color::random(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
                     sphere_material = make_shared<Metal>(albedo, fuzz);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
                 } else {
                     // glass
                     sphere_material = make_shared<Dielectric>(1.5);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
                 }
-                world.add(make_shared<Sphere>(center, 0.2, sphere_material));
             }
         }
     }
@@ -82,21 +86,21 @@ int main(int argc, char** argv) {
 
     // Image
     const double aspect_ratio = 16.0 / 9.0;
-    const int image_width = 800;
+    const int image_width = 400;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 20;
+    const int samples_per_pixel = 100;
     const int max_depth = 50;
 
     // World
     HittableList world = random_scene();
     // Camera
-    Point3 look_from(13, 2, 7);
+    Point3 look_from(13, 2, 3);
     Point3 look_at(0, 0, 0);
     Vec3 vup(0, 1, 0); // use world up to keep the camera horizontally level
     double dist_to_focus = 10.0;
     double aperture = 0.1;
 
-    Camera cam(look_from, look_at, vup, 30, aspect_ratio, aperture, dist_to_focus);
+    Camera cam(look_from, look_at, vup, 20, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
     // Render
     fmt::print(output, "P3\n{} {}\n255\n", image_width, image_height);
