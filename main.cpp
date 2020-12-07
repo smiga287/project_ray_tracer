@@ -25,6 +25,7 @@ Color ray_color(const Ray& r, const Hittable& world, int depth) {
         }
         return Color(0, 0, 0);
     }
+    // Returns a linear blend between blue and white depending on the Y value
     Vec3 unit_dir = unit_vector(r.getDirection());
     auto t = 0.5 * (unit_dir.y() + 1.0);
     return (1.0 - t) * Color(1, 1, 1) + t * Color(0.5, 0.7, 1.0);
@@ -110,8 +111,7 @@ int main(int argc, char** argv) {
                 Ray r = cam.get_ray(u, v);
                 pixel_color += ray_color(r, world, max_depth);
             }
-            write_color(average_color_gamma(pixel_color, samples_per_pixel),
-                        output);
+            write_color(average_color_gamma(pixel_color, samples_per_pixel), output);
         }
     }
     fmt::print(stderr, "\nDone\n");
