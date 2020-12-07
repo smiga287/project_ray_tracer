@@ -14,14 +14,13 @@
 
 using Color = Vec3;
 
-Color average_color_gamma(const Color& pixel_color, int samples_per_pixel) {
-    // Divide the color by the number of samples and gamma-correct for gamma=2.0
-    Color avg_color = (pixel_color * (1.0 / samples_per_pixel));
-    avg_color.sqrt();
-    return avg_color;
+Color average_color(const Color& pixel_color, int samples_per_pixel) {
+    // Divide the color by the number of samples
+    return  (pixel_color * (1.0 / samples_per_pixel));
 }
 
-void write_color(const Color& pixel_color, std::ofstream& output) {
+void write_color(std::ofstream& output, Color pixel_color) {
+    pixel_color.sqrt(); // gamma-correct for gamma=2.0
     double r = pixel_color.x();
     double g = pixel_color.y();
     double b = pixel_color.z();

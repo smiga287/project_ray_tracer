@@ -17,6 +17,9 @@ struct HitRecord {
     bool front_face{};
 
     inline void set_face_normal(const Ray& r, const Vec3& outward_normal) {
+        // if the ray and normal face different directions then the ray is outside of the object
+        // if the dot product of ray and normal is negative then the ray and normal face different directions
+        // we want the normal to always be outward
         front_face = dot(r.getDirection(), outward_normal) < 0;
         normal = front_face ? outward_normal : -outward_normal;
     }

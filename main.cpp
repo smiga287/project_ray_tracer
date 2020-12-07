@@ -10,19 +10,20 @@
 #include "utility.h"
 
 Color ray_color(const Ray& r, const Hittable& world, int depth) {
-    HitRecord rec;
-
     // If we've exceeded the ray bounce limit, no more light is gathered
     if (depth <= 0) {
         return Color(0, 0, 0);
     }
 
-    if (world.hit(r, 0.001, infinity, rec)) {
+    HitRecord hit_rec;
+    if (world.hit(r, 0.001, infinity, hit_rec)) {
         Ray scattered;
         Color attenuation;
-        if (rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
+        if (hit_rec.mat_ptr->scatter(r, hit_rec, attenuation, scattered)) {
+            // darken the color based on attenuation (how much light was absorbed)
             return attenuation * ray_color(scattered, world, depth - 1);
         }
+        // The ray was absorbed therefore we return black
         return Color(0, 0, 0);
     }
     // Returns a linear blend between blue and white depending on the Y value
@@ -89,13 +90,13 @@ int main(int argc, char** argv) {
     // World
     HittableList world = random_scene();
     // Camera
-    Point3 lookfrom(13, 2, 7);
-    Point3 lookat(0, 0, 0);
-    Vec3 vup(0, 1, 0);
+    Point3 look_from(13, 2, 7);
+    Point3 look_at(0, 0, 0);
+    Vec3 vup(0, 1, 0); // use world up to keep the camera horizontally level
     double dist_to_focus = 10.0;
-    double aperature = 0.1;
+    double aperture = 0.1;
 
-    Camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperature, dist_to_focus);
+    Camera cam(look_from, look_at, vup, 30, aspect_ratio, aperture, dist_to_focus);
 
     // Render
     fmt::print(output, "P3\n{} {}\n255\n", image_width, image_height);
@@ -103,15 +104,14 @@ int main(int argc, char** argv) {
         fmt::print(stderr, "\rScanLines remaining: {} ", j);
         for (int i = 0; i < image_width; ++i) {
             Color pixel_color(0, 0, 0);
-            // Take samples with random disturbance and average it out for
-            // antialiasing
+            // Take samples with random disturbance and average it out for antialiasing
             for (int s = 0; s < samples_per_pixel; ++s) {
                 double u = (i + random_double()) / (image_width - 1);
                 double v = (j + random_double()) / (image_height - 1);
                 Ray r = cam.get_ray(u, v);
                 pixel_color += ray_color(r, world, max_depth);
             }
-            write_color(average_color_gamma(pixel_color, samples_per_pixel), output);
+            write_color(output, average_color(pixel_color, samples_per_pixel));
         }
     }
     fmt::print(stderr, "\nDone\n");

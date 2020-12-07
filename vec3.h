@@ -151,6 +151,7 @@ Vec3 random_int_unit_disk() {
 }
 
 Vec3 random_in_unit_sphere() {
+    // Generate a random vector in unit cube and take it iff it's in unit sphere
     while (true) {
         auto p = Vec3::random(-1, 1);
         if (p.length_squared() >= 1) {
